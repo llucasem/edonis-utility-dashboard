@@ -12,6 +12,10 @@ out/
 # Claude Code local config (contains API keys)
 .claude/
 
+# Internal working docs — not for client repos
+CLAUDE.md
+AGENTS.md
+
 # Misc
 .DS_Store
 *.pem
