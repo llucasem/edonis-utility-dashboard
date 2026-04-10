@@ -16,6 +16,12 @@ out/
 CLAUDE.md
 AGENTS.md
 
+# Google OAuth credentials — NEVER upload these
+google-oauth.json
+client_secret*.json
+"Secret Key.com.json"
+Secret\ Key*.json
+
 # Misc
 .DS_Store
 *.pem

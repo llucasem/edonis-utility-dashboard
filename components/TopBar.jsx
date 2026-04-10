@@ -1,0 +1,29 @@
+import { IconChart } from './Icons';
+
+export default function TopBar({ exportCSV, onAnalytics, onAddExpense, toggleDark, onSync, syncing, lastSynced }) {
+  return (
+    <div className="topbar">
+      <div className="brand">
+        <h1>TDM Utilities</h1>
+        <span className="tag">Beta</span>
+      </div>
+      <div className="topbar-right">
+        <div className="sync-status">
+          <span className={`sync-dot ${syncing ? 'syncing' : 'live'}`}></span>
+          <span>{syncing ? 'Syncing…' : lastSynced ? `Synced · ${lastSynced}` : 'Not synced yet'}</span>
+        </div>
+        <button className="btn" onClick={exportCSV}>↓ Export for QuickBooks</button>
+        <button className="btn" onClick={onAnalytics}>
+          <IconChart /> Analytics
+        </button>
+        <button className="btn" onClick={onAddExpense}>+ Add expense</button>
+        <button className="btn primary" onClick={onSync} disabled={syncing}>
+          {syncing ? '⏳ Syncing…' : '↻ Sync now'}
+        </button>
+        <button className="toggle-track" onClick={toggleDark} title="Toggle dark mode">
+          <div className="toggle-thumb"></div>
+        </button>
+      </div>
+    </div>
+  );
+}
