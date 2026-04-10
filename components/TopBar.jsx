@@ -17,6 +17,7 @@ export default function TopBar({ exportCSV, onAnalytics, onAddExpense, toggleDar
           <IconChart /> Analytics
         </button>
         <button className="btn" onClick={onAddExpense}>+ Add expense</button>
+        <a className="btn" href="/admin">⚙ Account mappings</a>
         <button className="btn primary" onClick={onSync} disabled={syncing}>
           {syncing ? '⏳ Syncing…' : '↻ Sync now'}
         </button>

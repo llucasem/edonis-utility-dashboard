@@ -29,7 +29,22 @@ export async function GET() {
         continue;
       }
 
-      // 2. Guardar en Neon — ON CONFLICT skips duplicates atomically
+      // 2. Aplicar mapping si existe y no hay dirección extraída del email
+      let finalAddress = parsed.property_address || null;
+      let finalUnit    = parsed.unit             || null;
+      if (!finalAddress && parsed.account_last4 && parsed.utility_type) {
+        const mapRes = await pool.query(
+          `SELECT property_address, unit FROM account_mappings
+           WHERE utility_type = $1 AND account_last4 = $2 LIMIT 1`,
+          [parsed.utility_type, parsed.account_last4]
+        );
+        if (mapRes.rows.length > 0) {
+          finalAddress = mapRes.rows[0].property_address;
+          finalUnit    = finalUnit || mapRes.rows[0].unit;
+        }
+      }
+
+      // 3. Guardar en Neon — ON CONFLICT skips duplicates atomically
       const res = await pool.query(
         `INSERT INTO utility_bills
            (gmail_message_id, utility_type, property_address, unit, account_last4,
@@ -38,12 +53,12 @@ export async function GET() {
          ON CONFLICT (gmail_message_id) DO NOTHING`,
         [
           email.id,
-          parsed.utility_type     || 'other',
-          parsed.property_address || null,
-          parsed.unit             || null,
-          parsed.account_last4    || null,
-          parsed.amount_due       || null,
-          parsed.due_date         || null,
+          parsed.utility_type  || 'other',
+          finalAddress,
+          finalUnit,
+          parsed.account_last4 || null,
+          parsed.amount_due    || null,
+          parsed.due_date      || null,
           email.date,
           email.subject,
         ]
