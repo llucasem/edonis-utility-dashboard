@@ -15,7 +15,7 @@ export default function BillDetailModal({ bill, onClose, year }) {
           <div className="form-row">
             <div className="form-group">
               <label>Account</label>
-              <span className="form-value">···{bill.account}</span>
+              <span className="form-value">·····{bill.account}</span>
             </div>
             <div className="form-group">
               <label>Amount due</label>

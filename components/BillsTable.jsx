@@ -52,7 +52,7 @@ export default function BillsTable({
                   <span className="td">{bill.unit}</span>
                   <span className="td mono amount">{fmt(bill.amount)}</span>
                   <span className="td mono">{bill.due}</span>
-                  <span className="td mono">···{bill.account}</span>
+                  <span className="td mono">·····{bill.account}</span>
                   <span className="td">
                     {isDup ? (
                       <div className="dup-cell">
