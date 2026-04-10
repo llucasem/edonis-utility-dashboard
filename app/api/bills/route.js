@@ -26,7 +26,7 @@ export async function GET() {
       return {
         id:         row.id,
         type:       row.utility_type || 'other',
-        property:   row.property_address || '(sin dirección)',
+        property:   row.property_address || '(no address)',
         unit:       row.unit || '',
         account:    row.account_last4 || '—',
         amount:     row.amount_due ? parseFloat(row.amount_due) : 0,

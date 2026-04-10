@@ -135,7 +135,7 @@ export default function Dashboard() {
 
   if (loading) return (
     <div className="page-wrap" style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh' }}>
-      <p style={{ color:'var(--text-muted)', fontFamily:'var(--font-serif)' }}>Cargando facturas…</p>
+      <p style={{ color:'var(--text-muted)', fontFamily:'var(--font-serif)' }}>Loading bills…</p>
     </div>
   );
 
