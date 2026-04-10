@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# TDM Utilities Dashboard
 
-## Getting Started
+Internal utility bill management dashboard for **The Dream Management LLC** — a short-term rental company managing ~67 properties across New York, Los Angeles, Palm Springs, and Oslo.
 
-First, run the development server:
+## What it does
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Replaces the manual process of logging into 50+ utility accounts one by one. The system automatically reads emails from the Gmail "Utilities" folder, extracts bill data using AI, and presents everything in a clean dashboard organized by service type and month.
+
+- **Tabs** by utility type: Electricity, Internet, Gas, Rent, Insurance, Other
+- **Monthly view** — all stats, counts, and tables filtered by selected month
+- **Account mapping** — map utility account numbers to properties once; all current and future bills update automatically
+- **Sync** — manual sync button + automatic daily cron job
+- **QuickBooks export** — CSV export compatible with QuickBooks
+- **Bill detail** — direct link to original Gmail email for each bill
+
+## Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 15, React 19 |
+| Database | Neon (PostgreSQL) |
+| Email source | Gmail API (OAuth 2.0) |
+| AI parser | Claude Haiku (`claude-haiku-4-5-20251001`) |
+| Deployment | Vercel |
+
+## Project structure
+
+```
+app/
+  page.js                        # Main dashboard
+  admin/page.js                  # Account mapping admin screen
+  api/
+    bills/route.js               # GET — serve bills from database
+    sync/route.js                # GET — sync new emails from Gmail
+    account-mappings/route.js    # GET/POST — manage account mappings
+    account-mappings/unmapped/   # GET — accounts without a property assigned
+components/                      # UI components (TopBar, TabNav, BillsTable, etc.)
+lib/
+  gmail.js                       # Gmail OAuth2 connection
+  parser.js                      # Claude AI email parser
+  db.js                          # Neon PostgreSQL connection
+scripts/
+  get-gmail-token.js             # One-time OAuth setup script
+  run-sync.mjs                   # Full historical sync (no timeout)
+  reprocess-addresses.mjs        # Reprocess bills missing property address
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment variables
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+Create a `.env.local` file at the root with the following variables:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+DATABASE_URL=
+GMAIL_CLIENT_ID=
+GMAIL_CLIENT_SECRET=
+GMAIL_REFRESH_TOKEN=
+GMAIL_USER=
+ANTHROPIC_API_KEY=
+```
 
-## Learn More
+## Running locally
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Open [http://localhost:3000](http://localhost:3000).

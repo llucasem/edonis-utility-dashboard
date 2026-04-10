@@ -1,7 +1,7 @@
 /**
- * Reprocesa solo las facturas sin dirección, extrayendo la SERVICE address correcta.
- * Hace UPDATE en Neon (no duplica).
- * Ejecutar: node scripts/reprocess-addresses.mjs
+ * Reprocesses bills missing a property address, extracting the correct SERVICE address.
+ * Does UPDATE in Neon (no duplicates).
+ * Run with: node scripts/reprocess-addresses.mjs
  */
 
 import { fileURLToPath } from 'url';
@@ -11,7 +11,7 @@ import { google }         from 'googleapis';
 import Anthropic          from '@anthropic-ai/sdk';
 import pg                 from 'pg';
 
-// Cargar .env.local
+// Load .env.local
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const envPath   = join(__dirname, '..', '.env.local');
 for (const line of readFileSync(envPath, 'utf8').split('\n')) {

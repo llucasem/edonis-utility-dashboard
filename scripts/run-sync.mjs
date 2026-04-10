@@ -1,6 +1,6 @@
 /**
- * Script de sync completo — ejecutar con: node scripts/run-sync.mjs
- * Procesa todos los emails de Utilities desde el 1 de enero sin límite de tiempo.
+ * Full historical sync — run with: node scripts/run-sync.mjs
+ * Processes all Utilities emails since January 1st with no timeout.
  */
 
 import { fileURLToPath } from 'url';
@@ -10,7 +10,7 @@ import { google } from 'googleapis';
 import Anthropic from '@anthropic-ai/sdk';
 import pg from 'pg';
 
-// Cargar .env.local manualmente
+// Load .env.local manually (no dotenv dependency)
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const envPath   = join(__dirname, '..', '.env.local');
 for (const line of readFileSync(envPath, 'utf8').split('\n')) {
@@ -77,12 +77,12 @@ async function parseEmail(email) {
 const gmail  = google.gmail({ version: 'v1', auth: getOAuth() });
 const userId = process.env.GMAIL_USER;
 
-console.log('🔍 Buscando etiqueta Utilities...');
+console.log('🔍 Looking for Utilities label in Gmail...');
 const labelsRes = await gmail.users.labels.list({ userId });
 const utLabel   = labelsRes.data.labels?.find(l => l.name.toLowerCase() === 'utilities');
-if (!utLabel) { console.error('❌ No se encontró la etiqueta "Utilities"'); process.exit(1); }
+if (!utLabel) { console.error('❌ Gmail label "Utilities" not found'); process.exit(1); }
 
-console.log('📬 Obteniendo lista de emails desde el 1 de enero...');
+console.log('📬 Fetching email list since January 1st...');
 const messages = [];
 let pageToken  = undefined;
 do {
@@ -91,15 +91,15 @@ do {
   pageToken = r.data.nextPageToken;
 } while (pageToken);
 
-console.log(`📨 Total emails encontrados: ${messages.length}`);
+console.log(`📨 Total emails found: ${messages.length}`);
 
 let saved = 0, skipped = 0, errors = 0;
 
 for (let i = 0; i < messages.length; i++) {
   const { id } = messages[i];
-  process.stdout.write(`\r⏳ Procesando ${i + 1}/${messages.length} — guardados: ${saved} errores: ${errors}`);
+  process.stdout.write(`\r⏳ Processing ${i + 1}/${messages.length} — saved: ${saved} errors: ${errors}`);
 
-  // Descargar email completo
+  // Fetch full email
   let email;
   try {
     const msgRes  = await gmail.users.messages.get({ userId, id, format: 'full' });
@@ -121,7 +121,7 @@ for (let i = 0; i < messages.length; i++) {
     continue;
   }
 
-  // Parsear con Claude
+  // Parse with Claude
   let parsed;
   try {
     parsed = await parseEmail(email);
@@ -133,7 +133,7 @@ for (let i = 0; i < messages.length; i++) {
 
   if (!parsed) { errors++; continue; }
 
-  // Guardar en Neon
+  // Save to Neon
   try {
     const res = await pool.query(
       `INSERT INTO utility_bills (gmail_message_id, utility_type, property_address, unit, account_last4, amount_due, due_date, email_received_at, email_subject, status)
@@ -146,8 +146,8 @@ for (let i = 0; i < messages.length; i++) {
   await new Promise(r => setTimeout(r, 1500));
 }
 
-console.log(`\n\n✅ Sync completado:`);
-console.log(`   Guardados:  ${saved}`);
-console.log(`   Saltados:   ${skipped} (ya existían)`);
-console.log(`   Errores:    ${errors}`);
+console.log(`\n\n✅ Sync complete:`);
+console.log(`   Saved:    ${saved}`);
+console.log(`   Skipped:  ${skipped} (already existed)`);
+console.log(`   Errors:   ${errors}`);
 await pool.end();
