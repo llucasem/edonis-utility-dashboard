@@ -29,6 +29,12 @@ export async function GET() {
         continue;
       }
 
+      // Skip emails with no payable amount — notifications, confirmations, etc.
+      if (!parsed.amount_due || parseFloat(parsed.amount_due) <= 0) {
+        results.push({ id: email.id, status: 'skipped', reason: 'amount_due is 0 or missing' });
+        continue;
+      }
+
       // 2. Aplicar mapping si existe y no hay dirección extraída del email
       let finalAddress = parsed.property_address || null;
       let finalUnit    = parsed.unit             || null;
@@ -48,8 +54,8 @@ export async function GET() {
       const res = await pool.query(
         `INSERT INTO utility_bills
            (gmail_message_id, utility_type, property_address, unit, account_last4,
-            amount_due, due_date, email_received_at, email_subject, status)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending')
+            amount_due, due_date, email_received_at, email_subject, email_from, status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending')
          ON CONFLICT (gmail_message_id) DO NOTHING`,
         [
           email.id,
@@ -61,6 +67,7 @@ export async function GET() {
           parsed.due_date      || null,
           email.date,
           email.subject,
+          email.from           || null,
         ]
       );
 

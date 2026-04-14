@@ -136,9 +136,9 @@ for (let i = 0; i < messages.length; i++) {
   // Save to Neon
   try {
     const res = await pool.query(
-      `INSERT INTO utility_bills (gmail_message_id, utility_type, property_address, unit, account_last4, amount_due, due_date, email_received_at, email_subject, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending') ON CONFLICT (gmail_message_id) DO NOTHING`,
-      [id, parsed.utility_type || 'other', parsed.property_address || null, parsed.unit || null, parsed.account_last4 || null, parsed.amount_due || null, parsed.due_date || null, email.date, email.subject]
+      `INSERT INTO utility_bills (gmail_message_id, utility_type, property_address, unit, account_last4, amount_due, due_date, email_received_at, email_subject, email_from, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending') ON CONFLICT (gmail_message_id) DO NOTHING`,
+      [id, parsed.utility_type || 'other', parsed.property_address || null, parsed.unit || null, parsed.account_last4 || null, parsed.amount_due || null, parsed.due_date || null, email.date, email.subject, email.from || null]
     );
     if (res.rowCount === 0) skipped++; else saved++;
   } catch (e) { errors++; }

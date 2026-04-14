@@ -1,0 +1,35 @@
+[
+  {
+    "tag": "missing_account",
+    "utility_type": "electricity",
+    "provider": "ConEd",
+    "address": "474 9th Ave New York, NY 10018",
+    "unit": "4D",
+    "note": "No account number in spreadsheet"
+  },
+  {
+    "tag": "dual_account",
+    "utility_type": "electricity",
+    "provider": "SCE",
+    "address": "1711 Franklin Street, Santa Monica, CA 90404",
+    "unit": "",
+    "note": "Two accounts: 700978792486 and 700980483421. Imported second (···3421). Verify which is active."
+  },
+  {
+    "tag": "collision",
+    "utility_type": "gas",
+    "provider": "SoCalGas",
+    "account_last4": "9040",
+    "note": "Two properties share ···9040: \"1528 6th St, Santa Monica CA 90401 Apt 209\" AND \"1420 5th St, Santa Monica, CA 90401 Apt 501\". Cannot auto-assign. Jake must verify in SoCalGas portal.",
+    "addresses": [
+      {
+        "address": "1528 6th St, Santa Monica CA 90401",
+        "unit": "209"
+      },
+      {
+        "address": "1420 5th St, Santa Monica, CA 90401",
+        "unit": "501"
+      }
+    ]
+  }
+]

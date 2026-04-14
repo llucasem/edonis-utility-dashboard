@@ -14,6 +14,7 @@ export async function GET() {
       `SELECT id, utility_type, property_address, unit, account_last4,
               amount_due, due_date, email_received_at, email_subject, status
        FROM utility_bills
+       WHERE amount_due IS NOT NULL AND amount_due > 0
        ORDER BY due_date ASC NULLS LAST, created_at DESC`
     );
 
