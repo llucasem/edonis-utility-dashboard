@@ -94,7 +94,7 @@ function ContextRow({ account }) {
 }
 
 // ── Review Flag Card ──────────────────────────────────────────────────────────
-function FlagCard({ flag }) {
+function FlagCard({ flag, onDismiss }) {
   const cfg = FLAG_CONFIG[flag.tag] || FLAG_CONFIG.missing_account;
 
   return (
@@ -153,20 +153,38 @@ function FlagCard({ flag }) {
           ? 'Look up the account number in the utility portal, then add the mapping in the "Unmapped accounts" section below.'
           : 'Verify which account number is currently active in the utility portal.'}
       </p>
+      <div style={{ marginTop: 14, borderTop: `1px solid ${cfg.border}`, paddingTop: 12 }}>
+        <button
+          onClick={onDismiss}
+          style={{
+            background:   'transparent',
+            border:       `1px solid ${cfg.border}`,
+            borderRadius: 6,
+            padding:      '5px 14px',
+            fontSize:     12,
+            color:        cfg.color,
+            cursor:       'pointer',
+            fontWeight:   500,
+          }}
+        >
+          ✓ Mark as resolved
+        </button>
+      </div>
     </div>
   );
 }
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function AdminMappings() {
-  const [unmapped, setUnmapped] = useState([]);
-  const [mappings, setMappings] = useState([]);
-  const [flags,    setFlags]    = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [form,     setForm]     = useState({});
-  const [saving,   setSaving]   = useState({});
-  const [saved,    setSaved]    = useState({});
-  const [error,    setError]    = useState({});
+  const [unmapped,     setUnmapped]     = useState([]);
+  const [mappings,     setMappings]     = useState([]);
+  const [flags,        setFlags]        = useState([]);
+  const [loading,      setLoading]      = useState(true);
+  const [form,         setForm]         = useState({});
+  const [saving,       setSaving]       = useState({});
+  const [saved,        setSaved]        = useState({});
+  const [error,        setError]        = useState({});
+  const [dismissing,   setDismissing]   = useState({});
 
   const load = async () => {
     setLoading(true);
@@ -221,6 +239,19 @@ export default function AdminMappings() {
     }
   };
 
+  const handleDismiss = async (index) => {
+    setDismissing(prev => ({ ...prev, [index]: true }));
+    try {
+      const res  = await fetch(`/api/review-flags?index=${index}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.ok) {
+        setFlags(prev => prev.filter((_, i) => i !== index));
+      }
+    } finally {
+      setDismissing(prev => ({ ...prev, [index]: false }));
+    }
+  };
+
   const setField = (k, field, value) =>
     setForm(prev => ({ ...prev, [k]: { ...prev[k], [field]: value } }));
 
@@ -266,7 +297,14 @@ export default function AdminMappings() {
             <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
               These accounts couldn't be mapped automatically and need manual action.
             </p>
-            {flags.map((f, i) => <FlagCard key={i} flag={f} />)}
+            {flags.map((f, i) => (
+              <FlagCard
+                key={i}
+                flag={f}
+                onDismiss={() => handleDismiss(i)}
+                dismissing={dismissing[i]}
+              />
+            ))}
           </section>
         )}
 
