@@ -1,6 +1,6 @@
 import { MONTHS } from '@/lib/constants';
 
-export default function FiltersBar({ monthIndex, year, onPrev, onNext, search, onSearch, statusFilter, onStatusFilter }) {
+export default function FiltersBar({ monthIndex, year, onPrev, onNext, search, onSearch }) {
   return (
     <div className="filters-bar">
       <div className="month-picker">
@@ -15,16 +15,6 @@ export default function FiltersBar({ monthIndex, year, onPrev, onNext, search, o
         value={search}
         onChange={e => onSearch(e.target.value)}
       />
-      <select
-        className="filter-select"
-        value={statusFilter}
-        onChange={e => onStatusFilter(e.target.value)}
-      >
-        <option value="all">All statuses</option>
-        <option value="pending">Pending</option>
-        <option value="paid">Paid</option>
-        <option value="overdue">Overdue</option>
-      </select>
     </div>
   );
 }

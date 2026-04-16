@@ -84,8 +84,10 @@ body.dark .toggle-thumb { transform: translateX(18px); }
 .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow-sm); }
 .stat-label { font-family: 'Lora', serif; font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
 .stat-value { font-family: 'Inconsolata', monospace; font-size: 28px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; line-height: 1; }
-.stat-value.muted { color: var(--text2); }
-.stat-value.faint { color: var(--text3); }
+.stat-value.muted     { color: var(--text2); }
+.stat-value.faint     { color: var(--text3); }
+.stat-value.stat-up   { color: #c0392b; }
+.stat-value.stat-down { color: #27ae60; }
 .stat-sub { font-family: 'Lora', serif; font-size: 11px; color: var(--text3); margin-top: 6px; font-style: italic; }
 
 /* ── Filters bar ── */

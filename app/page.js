@@ -20,7 +20,6 @@ export default function Dashboard() {
   const [monthIndex,      setMonthIndex]      = useState(3);
   const [year,            setYear]            = useState(2026);
   const [search,          setSearch]          = useState('');
-  const [statusFilter,    setStatusFilter]    = useState('all');
   const [selectedBill,    setSelectedBill]    = useState(null);
   const [darkMode,        setDarkMode]        = useState(false);
   const [toast,           setToast]           = useState(false);
@@ -113,15 +112,17 @@ export default function Dashboard() {
     }
   };
 
-  const tabBills   = bills.filter(b => b.type === activeTab);
-  const monthBills = tabBills.filter(b => b.dueMonth === monthIndex && b.dueYear === year);
-  const filtered   = monthBills.filter(b => {
-    const matchMonth  = b.dueMonth === monthIndex && b.dueYear === year;
+  const prevMonthIndex = monthIndex === 0 ? 11 : monthIndex - 1;
+  const prevYear       = monthIndex === 0 ? year - 1 : year;
+
+  const tabBills      = bills.filter(b => b.type === activeTab);
+  const monthBills    = tabBills.filter(b => b.dueMonth === monthIndex && b.dueYear === year);
+  const prevMonthBills = tabBills.filter(b => b.dueMonth === prevMonthIndex && b.dueYear === prevYear);
+  const filtered      = monthBills.filter(b => {
     const matchSearch = search === '' ||
       b.property.toLowerCase().includes(search.toLowerCase()) ||
       b.unit.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === 'all' || b.status === statusFilter;
-    return matchMonth && matchSearch && matchStatus;
+    return matchSearch;
   });
   if (loading) return (
     <div className="page-wrap" style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh' }}>
@@ -147,7 +148,7 @@ export default function Dashboard() {
         monthIndex={monthIndex}
         year={year}
       />
-      <StatsRow tabBills={monthBills} />
+      <StatsRow monthBills={monthBills} prevMonthBills={prevMonthBills} />
       <FiltersBar
         monthIndex={monthIndex}
         year={year}
@@ -155,8 +156,6 @@ export default function Dashboard() {
         onNext={nextMonth}
         search={search}
         onSearch={setSearch}
-        statusFilter={statusFilter}
-        onStatusFilter={setStatusFilter}
       />
       <BillsTable
         filtered={filtered}
