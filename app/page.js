@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MOCK_BILLS_INITIAL } from '@/data/mockBills';
 import TopBar          from '@/components/TopBar';
-import TabNav          from '@/components/TabNav';
 import StatsRow        from '@/components/StatsRow';
 import FiltersBar      from '@/components/FiltersBar';
 import BillsTable      from '@/components/BillsTable';
@@ -16,7 +14,6 @@ const DUE_MONTH_MAP = { Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Ju
 export default function Dashboard() {
   const [bills,           setBills]           = useState([]);
   const [loading,         setLoading]         = useState(true);
-  const [activeTab,       setActiveTab]       = useState('electricity');
   const [monthIndex,      setMonthIndex]      = useState(3);
   const [year,            setYear]            = useState(2026);
   const [search,          setSearch]          = useState('');
@@ -115,13 +112,12 @@ export default function Dashboard() {
   const prevMonthIndex = monthIndex === 0 ? 11 : monthIndex - 1;
   const prevYear       = monthIndex === 0 ? year - 1 : year;
 
-  const tabBills      = bills.filter(b => b.type === activeTab);
-  const monthBills    = tabBills.filter(b => b.dueMonth === monthIndex && b.dueYear === year);
-  const prevMonthBills = tabBills.filter(b => b.dueMonth === prevMonthIndex && b.dueYear === prevYear);
+  const monthBills    = bills.filter(b => b.dueMonth === monthIndex && b.dueYear === year);
+  const prevMonthBills = bills.filter(b => b.dueMonth === prevMonthIndex && b.dueYear === prevYear);
   const filtered      = monthBills.filter(b => {
     const matchSearch = search === '' ||
-      b.property.toLowerCase().includes(search.toLowerCase()) ||
-      b.unit.toLowerCase().includes(search.toLowerCase());
+      (b.property || '').toLowerCase().includes(search.toLowerCase()) ||
+      (b.unit || '').toLowerCase().includes(search.toLowerCase());
     return matchSearch;
   });
   if (loading) return (
@@ -141,13 +137,6 @@ export default function Dashboard() {
         syncing={syncing}
         lastSynced={lastSynced}
       />
-      <TabNav
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        bills={bills}
-        monthIndex={monthIndex}
-        year={year}
-      />
       <StatsRow monthBills={monthBills} prevMonthBills={prevMonthBills} />
       <FiltersBar
         monthIndex={monthIndex}
@@ -160,9 +149,6 @@ export default function Dashboard() {
       <BillsTable
         filtered={filtered}
         onSelectBill={setSelectedBill}
-        activeTab={activeTab}
-        monthIndex={monthIndex}
-        year={year}
       />
 
       <div className={`toast ${toast ? 'show' : ''}`}>{toastMsg}</div>

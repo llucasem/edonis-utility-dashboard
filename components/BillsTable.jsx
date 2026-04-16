@@ -1,37 +1,127 @@
 import { fmt } from '@/lib/utils';
-import { MONTHS } from '@/lib/constants';
 
-export default function BillsTable({ filtered, onSelectBill, activeTab, monthIndex, year }) {
+const SERVICES = ['electricity', 'internet', 'gas'];
+const SERVICE_LABELS = { electricity: 'Electricity', internet: 'Internet', gas: 'Gas' };
+
+export default function BillsTable({ filtered, onSelectBill }) {
+  // Separate mapped vs unmapped bills
+  const mapped   = filtered.filter(b => b.property && b.property.trim() !== '');
+  const unmapped = filtered.filter(b => !b.property || b.property.trim() === '');
+
+  // Build property+unit rows from mapped bills
+  const rowMap = new Map();
+  for (const bill of mapped) {
+    const key = `${bill.property}|||${bill.unit || ''}`;
+    if (!rowMap.has(key)) {
+      rowMap.set(key, { property: bill.property, unit: bill.unit || '', bills: {} });
+    }
+    const type = bill.type;
+    if (SERVICES.includes(type)) {
+      // Keep first bill found for each service (duplicates in same month are rare)
+      if (!rowMap.get(key).bills[type]) {
+        rowMap.get(key).bills[type] = bill;
+      }
+    }
+  }
+
+  // Sort rows: alphabetically by property, then by unit
+  const rows = Array.from(rowMap.values()).sort((a, b) => {
+    const pa = a.property.toLowerCase();
+    const pb = b.property.toLowerCase();
+    if (pa !== pb) return pa < pb ? -1 : 1;
+    return (a.unit || '').localeCompare(b.unit || '', undefined, { numeric: true });
+  });
+
+  // Column totals
+  const colTotals = {};
+  for (const svc of SERVICES) {
+    colTotals[svc] = rows.reduce((s, r) => s + (r.bills[svc]?.amount || 0), 0);
+  }
+  const grandTotal = SERVICES.reduce((s, svc) => s + colTotals[svc], 0);
+
+  if (rows.length === 0 && unmapped.length === 0) {
+    return (
+      <div className="empty-state">
+        <div className="empty-icon">No entries found</div>
+        <p>No bills found for this month</p>
+      </div>
+    );
+  }
+
   return (
-    <>
-      {filtered.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">No entries found</div>
-          <p>No {activeTab} bills for {MONTHS[monthIndex]} {year}</p>
-          <button className="btn primary">↻ Sync emails</button>
-        </div>
-      ) : (
-        <div className="table-wrap">
-          <div className="table-header">
+    <div>
+      {rows.length > 0 && (
+        <div className="property-matrix">
+          {/* Header */}
+          <div className="matrix-header">
             <span className="th">Property</span>
             <span className="th">Unit</span>
-            <span className="th">Amount</span>
-            <span className="th">Due date</span>
-            <span className="th">Account</span>
-          </div>
-          <div>
-            {filtered.map(bill => (
-              <div key={bill.id} className="table-row" onClick={() => onSelectBill(bill)}>
-                <span className="td-property">{bill.property}</span>
-                <span className="td">{bill.unit}</span>
-                <span className="td mono amount">{fmt(bill.amount)}</span>
-                <span className="td mono">{bill.due}</span>
-                <span className="td mono">·····{bill.account}</span>
-              </div>
+            {SERVICES.map(svc => (
+              <span key={svc} className="th">{SERVICE_LABELS[svc]}</span>
             ))}
+            <span className="th" style={{ textAlign: 'right' }}>Total</span>
+          </div>
+
+          {/* Data rows */}
+          {rows.map((row, i) => {
+            const rowTotal = SERVICES.reduce((s, svc) => s + (row.bills[svc]?.amount || 0), 0);
+            return (
+              <div key={i} className="matrix-row">
+                <span className="td-property">{row.property}</span>
+                <span className="td mono">{row.unit || '—'}</span>
+                {SERVICES.map(svc => {
+                  const bill = row.bills[svc];
+                  if (!bill) return (
+                    <span key={svc} className="matrix-cell-empty">—</span>
+                  );
+                  return (
+                    <span
+                      key={svc}
+                      className="matrix-cell"
+                      onClick={() => onSelectBill(bill)}
+                    >
+                      <span className="matrix-cell-amount">{fmt(bill.amount)}</span>
+                      <span className="matrix-cell-account">·····{bill.account}</span>
+                    </span>
+                  );
+                })}
+                <span className="matrix-row-total">{rowTotal > 0 ? fmt(rowTotal) : '—'}</span>
+              </div>
+            );
+          })}
+
+          {/* Totals row */}
+          <div className="matrix-total-row">
+            <span>Total</span>
+            <span></span>
+            {SERVICES.map(svc => (
+              <span key={svc} className="mono">{colTotals[svc] > 0 ? fmt(colTotals[svc]) : '—'}</span>
+            ))}
+            <span className="mono" style={{ textAlign: 'right' }}>{fmt(grandTotal)}</span>
           </div>
         </div>
       )}
-    </>
+
+      {/* Unmapped bills section */}
+      {unmapped.length > 0 && (
+        <div className="matrix-unmapped">
+          <div className="matrix-unmapped-title">
+            Unassigned ({unmapped.length} {unmapped.length === 1 ? 'bill' : 'bills'} — account not yet mapped to a property)
+          </div>
+          {unmapped.map(bill => (
+            <div
+              key={bill.id}
+              className="matrix-unmapped-row"
+              onClick={() => onSelectBill(bill)}
+            >
+              <span className="matrix-unmapped-type">{bill.type}</span>
+              <span className="mono">·····{bill.account}</span>
+              <span className="mono">{fmt(bill.amount)}</span>
+              <span className="matrix-unmapped-due">{bill.due}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

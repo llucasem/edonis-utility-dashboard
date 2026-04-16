@@ -210,3 +210,26 @@ body.dark .toggle-thumb { transform: translateX(18px); }
 .form-value { font-family: 'Inconsolata', monospace; font-size: 15px; color: var(--text); display: block; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface2); }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .modal-divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── Property Matrix ── */
+.property-matrix { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); margin-bottom: 24px; }
+.matrix-header { display: grid; grid-template-columns: 2.4fr 0.6fr 1.1fr 1.1fr 1.1fr 1fr; padding: 10px 20px; background: var(--surface2); border-bottom: 1px solid var(--border); gap: 8px; }
+.matrix-row { display: grid; grid-template-columns: 2.4fr 0.6fr 1.1fr 1.1fr 1.1fr 1fr; padding: 12px 20px; align-items: center; border-bottom: 1px solid var(--border); gap: 8px; transition: background 0.1s; }
+.matrix-row:hover { background: var(--surface2); }
+.matrix-row:last-child { border-bottom: none; }
+.matrix-cell { display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
+.matrix-cell:hover .matrix-cell-amount { color: var(--accent); }
+.matrix-cell-amount { font-family: 'Inconsolata', monospace; font-size: 14px; color: var(--text); font-weight: 600; }
+.matrix-cell-account { font-family: 'Inconsolata', monospace; font-size: 11px; color: var(--text3); }
+.matrix-cell-empty { font-family: 'Inconsolata', monospace; font-size: 14px; color: var(--text3); opacity: 0.45; }
+.matrix-row-total { font-family: 'Inconsolata', monospace; font-size: 14px; color: var(--text2); font-weight: 600; text-align: right; }
+.matrix-total-row { display: grid; grid-template-columns: 2.4fr 0.6fr 1.1fr 1.1fr 1.1fr 1fr; padding: 11px 20px; background: var(--surface2); gap: 8px; font-family: 'Inconsolata', monospace; font-size: 14px; font-weight: 700; color: var(--text); border-top: 2px solid var(--border); }
+
+/* ── Unmapped bills section ── */
+.matrix-unmapped { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); }
+.matrix-unmapped-title { font-family: 'Lora', serif; font-size: 11px; font-style: italic; color: var(--text3); padding: 10px 20px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.matrix-unmapped-row { display: grid; grid-template-columns: 1.2fr 1.2fr 1fr 1fr; padding: 10px 20px; border-bottom: 1px solid var(--border); align-items: center; gap: 8px; cursor: pointer; transition: background 0.1s; }
+.matrix-unmapped-row:hover { background: var(--surface2); }
+.matrix-unmapped-row:last-child { border-bottom: none; }
+.matrix-unmapped-type { font-family: 'Lora', serif; font-size: 13px; color: var(--text2); text-transform: capitalize; }
+.matrix-unmapped-due { font-family: 'Inconsolata', monospace; font-size: 13px; color: var(--text3); }
