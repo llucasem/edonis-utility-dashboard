@@ -31,7 +31,7 @@ export async function GET() {
         unit:       row.unit || '',
         account:    row.account_last4 || '—',
         amount:     row.amount_due ? parseFloat(row.amount_due) : 0,
-        due:        formatDue(row.due_date) || '—',
+        due:        formatDue(row.due_date) || formatDue(row.email_received_at) || '—',
         status:     row.status || 'pending',
         gmailLink:  row.gmail_message_id
           ? `https://mail.google.com/mail/u/0/#all/${row.gmail_message_id}`
