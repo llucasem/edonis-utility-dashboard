@@ -12,7 +12,21 @@ export async function GET() {
 
     const results = [];
 
+    // Subjects that are payment confirmations, not bills — skip before calling Claude
+    const SKIP_SUBJECTS = [
+      'automatic monthly payment is scheduled',
+      'thanks for paying your con edison bill',
+      'thank you for your payment',
+    ];
+
     for (const email of emails) {
+      // Skip known payment-confirmation emails (not bills — no useful address/account info)
+      const subjectLower = (email.subject || '').toLowerCase();
+      if (SKIP_SUBJECTS.some(s => subjectLower.includes(s))) {
+        results.push({ id: email.id, status: 'skipped', reason: 'payment confirmation — not a bill' });
+        continue;
+      }
+
       // 1. Parsear con Claude (leer PDF si existe, o cuerpo del email)
       let parsed;
       try {

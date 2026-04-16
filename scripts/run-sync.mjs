@@ -93,6 +93,13 @@ do {
 
 console.log(`📨 Total emails found: ${messages.length}`);
 
+// Payment confirmation subjects — skip before calling Claude
+const SKIP_SUBJECTS = [
+  'automatic monthly payment is scheduled',
+  'thanks for paying your con edison bill',
+  'thank you for your payment',
+];
+
 let saved = 0, skipped = 0, errors = 0;
 
 for (let i = 0; i < messages.length; i++) {
@@ -118,6 +125,12 @@ for (let i = 0; i < messages.length; i++) {
     email = { id, subject, from, date: dateStr ? new Date(dateStr).toISOString() : null, snippet: msg.snippet || '', body, pdfBase64 };
   } catch (e) {
     errors++;
+    continue;
+  }
+
+  // Skip payment confirmation emails before calling Claude
+  if (SKIP_SUBJECTS.some(s => email.subject.toLowerCase().includes(s))) {
+    skipped++;
     continue;
   }
 
