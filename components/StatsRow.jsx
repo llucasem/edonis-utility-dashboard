@@ -6,7 +6,6 @@ export default function StatsRow({ tabBills }) {
   const overdueAmt   = overdueBills.reduce((s, b) => s + b.amount, 0);
   const paidBills    = tabBills.filter(b => b.status === 'paid');
   const paidAmt      = paidBills.reduce((s, b) => s + b.amount, 0);
-  const pendingCount = tabBills.filter(b => b.status === 'pending').length;
 
   return (
     <div className="stats-row">
@@ -26,11 +25,6 @@ export default function StatsRow({ tabBills }) {
         <div className="stat-label">Paid</div>
         <div className={`stat-value ${paidAmt > 0 ? 'muted' : 'faint'}`}>{fmt(paidAmt)}</div>
         <div className="stat-sub">{paidBills.length} {paidBills.length === 1 ? 'bill' : 'bills'} settled</div>
-      </div>
-      <div className="stat-card">
-        <div className="stat-label">Pending</div>
-        <div className={`stat-value ${pendingCount > 0 ? '' : 'faint'}`}>{pendingCount}</div>
-        <div className="stat-sub">awaiting payment</div>
       </div>
     </div>
   );

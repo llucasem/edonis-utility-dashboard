@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { MOCK_BILLS_INITIAL } from '@/data/mockBills';
-import { dupKey } from '@/lib/utils';
 import TopBar          from '@/components/TopBar';
 import TabNav          from '@/components/TabNav';
 import StatsRow        from '@/components/StatsRow';
@@ -26,8 +25,6 @@ export default function Dashboard() {
   const [darkMode,        setDarkMode]        = useState(false);
   const [toast,           setToast]           = useState(false);
   const [toastMsg,        setToastMsg]        = useState('');
-  const [reviewed,        setReviewed]        = useState(new Set());
-  const [bannerDismissed, setBannerDismissed] = useState(false);
   const [analyticsOpen,   setAnalyticsOpen]   = useState(false);
   const [addOpen,         setAddOpen]         = useState(false);
   const [syncing,         setSyncing]         = useState(false);
@@ -116,11 +113,6 @@ export default function Dashboard() {
     }
   };
 
-  const dupCounts = {};
-  bills.forEach(b => { const k = dupKey(b); dupCounts[k] = (dupCounts[k] || 0) + 1; });
-  const dupKeys   = new Set(Object.entries(dupCounts).filter(([, c]) => c > 1).map(([k]) => k));
-  const markReviewed = (id) => setReviewed(prev => new Set([...prev, id]));
-
   const tabBills   = bills.filter(b => b.type === activeTab);
   const monthBills = tabBills.filter(b => b.dueMonth === monthIndex && b.dueYear === year);
   const filtered   = monthBills.filter(b => {
@@ -131,8 +123,6 @@ export default function Dashboard() {
     const matchStatus = statusFilter === 'all' || b.status === statusFilter;
     return matchMonth && matchSearch && matchStatus;
   });
-  const activeDups = filtered.filter(b => dupKeys.has(dupKey(b)) && !reviewed.has(b.id));
-
   if (loading) return (
     <div className="page-wrap" style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh' }}>
       <p style={{ color:'var(--text-muted)', fontFamily:'var(--font-serif)' }}>Loading bills…</p>
@@ -152,7 +142,7 @@ export default function Dashboard() {
       />
       <TabNav
         activeTab={activeTab}
-        onTabChange={tab => { setActiveTab(tab); setBannerDismissed(false); }}
+        onTabChange={setActiveTab}
         bills={bills}
         monthIndex={monthIndex}
         year={year}
@@ -170,13 +160,7 @@ export default function Dashboard() {
       />
       <BillsTable
         filtered={filtered}
-        dupKeys={dupKeys}
-        reviewed={reviewed}
-        onMarkReviewed={markReviewed}
         onSelectBill={setSelectedBill}
-        activeDups={activeDups}
-        bannerDismissed={bannerDismissed}
-        onDismissBanner={() => setBannerDismissed(true)}
         activeTab={activeTab}
         monthIndex={monthIndex}
         year={year}
