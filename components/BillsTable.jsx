@@ -2,18 +2,30 @@ import { fmt } from '@/lib/utils';
 
 const SERVICES = ['electricity', 'internet', 'gas'];
 const SERVICE_LABELS = { electricity: 'Electricity', internet: 'Internet', gas: 'Gas' };
+const EMPTY_VALUES = ['', '—', 'n/a', 'unknown', '(no address)'];
+
+function normalizeUnit(unit) {
+  return (unit || '')
+    .replace(/^apt\.?\s*/i, '')
+    .replace(/^#\s*/, '')
+    .trim();
+}
+
+function isMapped(b) {
+  return b.property && !EMPTY_VALUES.includes(b.property.trim().toLowerCase());
+}
 
 export default function BillsTable({ filtered, onSelectBill }) {
   // Separate mapped vs unmapped bills
-  const mapped   = filtered.filter(b => b.property && b.property.trim() !== '');
-  const unmapped = filtered.filter(b => !b.property || b.property.trim() === '');
+  const mapped   = filtered.filter(isMapped);
+  const unmapped = filtered.filter(b => !isMapped(b));
 
   // Build property+unit rows from mapped bills
   const rowMap = new Map();
   for (const bill of mapped) {
-    const key = `${bill.property}|||${bill.unit || ''}`;
+    const key = `${bill.property}|||${normalizeUnit(bill.unit)}`;
     if (!rowMap.has(key)) {
-      rowMap.set(key, { property: bill.property, unit: bill.unit || '', bills: {} });
+      rowMap.set(key, { property: bill.property, unit: normalizeUnit(bill.unit), bills: {} });
     }
     const type = bill.type;
     if (SERVICES.includes(type)) {
