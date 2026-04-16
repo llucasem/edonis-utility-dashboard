@@ -1,23 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import TopBar          from '@/components/TopBar';
-import StatsRow        from '@/components/StatsRow';
-import FiltersBar      from '@/components/FiltersBar';
-import BillsTable      from '@/components/BillsTable';
-import BillDetailModal from '@/components/BillDetailModal';
-import AddBillModal    from '@/components/AddBillModal';
-import AnalyticsModal  from '@/components/AnalyticsModal';
+import TopBar               from '@/components/TopBar';
+import StatsRow              from '@/components/StatsRow';
+import FiltersBar            from '@/components/FiltersBar';
+import BillsTable            from '@/components/BillsTable';
+import BillDetailModal       from '@/components/BillDetailModal';
+import AddBillModal          from '@/components/AddBillModal';
+import AssignPropertyModal   from '@/components/AssignPropertyModal';
+import AnalyticsModal        from '@/components/AnalyticsModal';
 
 const DUE_MONTH_MAP = { Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12' };
 
 export default function Dashboard() {
   const [bills,           setBills]           = useState([]);
+  const [properties,      setProperties]      = useState([]);
   const [loading,         setLoading]         = useState(true);
   const [monthIndex,      setMonthIndex]      = useState(3);
   const [year,            setYear]            = useState(2026);
   const [search,          setSearch]          = useState('');
   const [selectedBill,    setSelectedBill]    = useState(null);
+  const [assignBill,      setAssignBill]      = useState(null);
   const [darkMode,        setDarkMode]        = useState(false);
   const [toast,           setToast]           = useState(false);
   const [toastMsg,        setToastMsg]        = useState('');
@@ -26,14 +29,22 @@ export default function Dashboard() {
   const [syncing,         setSyncing]         = useState(false);
   const [lastSynced,      setLastSynced]      = useState('');
 
+  const fetchBills = async () => {
+    const res  = await fetch('/api/bills');
+    const data = await res.json();
+    if (data.ok) setBills(data.bills);
+  };
+
+  const fetchProperties = async () => {
+    const res  = await fetch('/api/properties');
+    const data = await res.json();
+    if (data.ok) setProperties(data.properties);
+  };
+
   useEffect(() => {
-    fetch('/api/bills')
-      .then(r => r.json())
-      .then(data => {
-        if (data.ok) setBills(data.bills);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    Promise.all([fetchBills(), fetchProperties()])
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const showToast = (msg) => {
@@ -79,7 +90,12 @@ export default function Dashboard() {
 
   const handleAddBill = (newBill) => {
     setBills(prev => [...prev, newBill]);
-    showToast('Expense added successfully');
+    showToast('Bill added successfully');
+  };
+
+  const handleAssigned = async () => {
+    await fetchBills();
+    showToast('Bill assigned to property');
   };
 
   const handleSync = async () => {
@@ -88,10 +104,7 @@ export default function Dashboard() {
       const res  = await fetch('/api/sync');
       const data = await res.json();
       if (data.ok) {
-        // Recargar facturas después del sync
-        const billsRes  = await fetch('/api/bills');
-        const billsData = await billsRes.json();
-        if (billsData.ok) setBills(billsData.bills);
+        await fetchBills();
 
         const now = new Date();
         const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -131,7 +144,7 @@ export default function Dashboard() {
       <TopBar
         exportCSV={exportCSV}
         onAnalytics={() => setAnalyticsOpen(true)}
-        onAddExpense={() => setAddOpen(true)}
+        onAddData={() => setAddOpen(true)}
         toggleDark={toggleDark}
         onSync={handleSync}
         syncing={syncing}
@@ -149,6 +162,7 @@ export default function Dashboard() {
       <BillsTable
         filtered={filtered}
         onSelectBill={setSelectedBill}
+        onAssignBill={setAssignBill}
       />
 
       <div className={`toast ${toast ? 'show' : ''}`}>{toastMsg}</div>
@@ -162,6 +176,14 @@ export default function Dashboard() {
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onSave={handleAddBill}
+        properties={properties}
+        onPropertyAdded={fetchProperties}
+      />
+      <AssignPropertyModal
+        bill={assignBill}
+        properties={properties}
+        onClose={() => setAssignBill(null)}
+        onAssigned={handleAssigned}
       />
       <AnalyticsModal
         open={analyticsOpen}

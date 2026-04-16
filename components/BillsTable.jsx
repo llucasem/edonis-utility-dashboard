@@ -15,7 +15,7 @@ function isMapped(b) {
   return b.property && !EMPTY_VALUES.includes(b.property.trim().toLowerCase());
 }
 
-export default function BillsTable({ filtered, onSelectBill }) {
+export default function BillsTable({ filtered, onSelectBill, onAssignBill }) {
   // Separate mapped vs unmapped bills
   const mapped   = filtered.filter(isMapped);
   const unmapped = filtered.filter(b => !isMapped(b));
@@ -118,18 +118,20 @@ export default function BillsTable({ filtered, onSelectBill }) {
       {unmapped.length > 0 && (
         <div className="matrix-unmapped">
           <div className="matrix-unmapped-title">
-            Unassigned ({unmapped.length} {unmapped.length === 1 ? 'bill' : 'bills'} — account not yet mapped to a property)
+            Unassigned ({unmapped.length} {unmapped.length === 1 ? 'bill' : 'bills'} — click a row to assign it to a property)
           </div>
           {unmapped.map(bill => (
             <div
               key={bill.id}
               className="matrix-unmapped-row"
-              onClick={() => onSelectBill(bill)}
+              onClick={() => onAssignBill ? onAssignBill(bill) : onSelectBill(bill)}
+              title="Click to assign to a property"
             >
               <span className="matrix-unmapped-type">{bill.type}</span>
               <span className="mono">·····{bill.account}</span>
               <span className="mono">{fmt(bill.amount)}</span>
               <span className="matrix-unmapped-due">{bill.due}</span>
+              <span style={{ color: 'var(--accent)', fontSize: 11, marginLeft: 'auto' }}>+ Assign →</span>
             </div>
           ))}
         </div>

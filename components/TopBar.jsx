@@ -1,6 +1,6 @@
 import { IconChart } from './Icons';
 
-export default function TopBar({ exportCSV, onAnalytics, onAddExpense, toggleDark, onSync, syncing, lastSynced }) {
+export default function TopBar({ exportCSV, onAnalytics, onAddData, toggleDark, onSync, syncing, lastSynced }) {
   return (
     <div className="topbar">
       <div className="brand">
@@ -16,8 +16,7 @@ export default function TopBar({ exportCSV, onAnalytics, onAddExpense, toggleDar
         <button className="btn" onClick={onAnalytics}>
           <IconChart /> Analytics
         </button>
-        <button className="btn" onClick={onAddExpense}>+ Add expense</button>
-        <a className="btn" href="/admin">⚙ Account mappings</a>
+        <button className="btn" onClick={onAddData}>+ Add data</button>
         <button className="btn primary" onClick={onSync} disabled={syncing}>
           {syncing ? '⏳ Syncing…' : '↻ Sync now'}
         </button>
