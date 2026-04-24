@@ -21,6 +21,7 @@ Replaces the manual process of logging into 50+ utility accounts one by one. The
 | Database | Neon (PostgreSQL) |
 | Email source | Gmail API (OAuth 2.0) |
 | AI parser | Claude Haiku (`claude-haiku-4-5-20251001`) |
+| Accounting | QuickBooks Online API (Intuit) |
 | Deployment | Vercel |
 
 ## Project structure
@@ -51,12 +52,67 @@ Create a `.env.local` file at the root with the following variables:
 
 ```
 DATABASE_URL=
+
+# Gmail OAuth
 GMAIL_CLIENT_ID=
 GMAIL_CLIENT_SECRET=
-GMAIL_REFRESH_TOKEN=
+GMAIL_REFRESH_TOKEN=        # Generate with: node scripts/get-gmail-token.js
 GMAIL_USER=
+
+# Claude AI
 ANTHROPIC_API_KEY=
+
+# QuickBooks Online (Intuit Developer — app "Edonis Utility Dashboard")
+QB_CLIENT_ID=               # From developer.intuit.com → Keys & credentials
+QB_CLIENT_SECRET=
+QB_REFRESH_TOKEN=           # Generate with: node scripts/get-qb-token.js
+QB_REALM_ID=                # QB company ID (visible in QBO URL when logged in)
+QB_ENVIRONMENT=sandbox      # "sandbox" or "production"
 ```
+
+## QuickBooks Online — integration status
+
+**Sandbox connected:** 22/04/2026 ✅
+
+| Variable | Status |
+|---|---|
+| `QB_CLIENT_ID` | ✅ Set |
+| `QB_CLIENT_SECRET` | ✅ Set |
+| `QB_REFRESH_TOKEN` | ✅ Set (sandbox) |
+| `QB_REALM_ID` | ✅ Set (sandbox company) |
+| `QB_ENVIRONMENT` | `sandbox` → change to `production` after Intuit approval |
+
+**How the OAuth was obtained:**
+1. Created app `Edonis Utility Dashboard` at developer.intuit.com (Accounting scope only)
+2. Added `http://localhost` as Redirect URI in Development Settings
+3. Ran `node scripts/get-qb-token.js` → generated auth URL
+4. Authorized using Intuit's sandbox test company (no real QB account needed for sandbox)
+5. Pasted redirect URL → script exchanged code for `refresh_token` + `realmId`
+6. Verified: connected successfully, reads Bills from sandbox ✅
+
+**To move to production:**
+1. Go to developer.intuit.com → Production Settings → add Redirect URI
+2. Complete Intuit's compliance form (Privacy Policy + EULA required)
+3. Pass Intuit security assessment → **1–3 weeks approval time**
+4. Swap all `QB_*` variables for production values and set `QB_ENVIRONMENT=production`
+5. Re-run `node scripts/get-qb-token.js` with Edonis's real QB account (needs admin access)
+
+**What we can do with the current scope (`com.intuit.quickbooks.accounting`):**
+- Read Bills, BillPayments, Vendors, Accounts, Purchases
+- Update Bills (add memos, internal references)
+- Create BillPayments (mark bills as paid — requires specifying payment method + bank account)
+- Run financial reports
+
+**What is NOT included (by design):**
+- Payment processing (`com.intuit.quickbooks.payment` scope — not requested)
+
+**Next steps in the app:**
+- [ ] `lib/qb.js` — QuickBooks client (OAuth token refresh + API calls)
+- [ ] `app/api/qb/bills/route.js` — read QB Bills and serve to dashboard
+- [ ] Match utility bills from Gmail ↔ Bills in QuickBooks by amount + date + vendor
+- [ ] Show QuickBooks status in BillDetailModal
+
+---
 
 ## Running locally
 
