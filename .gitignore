@@ -26,3 +26,12 @@ Secret\ Key*.json
 .DS_Store
 *.pem
 npm-debug.log*
+
+# Investigation outputs — contain sensitive Gmail data (subjects, senders, amounts)
+investigation.txt
+investigation.err
+deep-investigation.txt
+deep-progress.log
+
+# Old client data exports
+Utilities backup - Sheet1.csv

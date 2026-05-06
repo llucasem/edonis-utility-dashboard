@@ -15,7 +15,14 @@ function isMapped(b) {
   return b.property && !EMPTY_VALUES.includes(b.property.trim().toLowerCase());
 }
 
-export default function BillsTable({ filtered, onSelectBill, onAssignBill }) {
+function MatchBadge({ match }) {
+  if (!match) return null;
+  if (match.count === 1) return <span className="qb-badge qb-ok" title="1 match in QuickBooks">✓</span>;
+  if (match.count > 1)   return <span className="qb-badge qb-warn" title={`${match.count} possible matches — review manually`}>⚠ {match.count}</span>;
+  return <span className="qb-badge qb-miss" title="No match found in QuickBooks">✗</span>;
+}
+
+export default function BillsTable({ filtered, onSelectBill, onAssignBill, matches = {} }) {
   // Separate mapped vs unmapped bills
   const mapped   = filtered.filter(isMapped);
   const unmapped = filtered.filter(b => !isMapped(b));
@@ -25,15 +32,28 @@ export default function BillsTable({ filtered, onSelectBill, onAssignBill }) {
   for (const bill of mapped) {
     const key = `${bill.property}|||${normalizeUnit(bill.unit)}`;
     if (!rowMap.has(key)) {
-      rowMap.set(key, { property: bill.property, unit: normalizeUnit(bill.unit), bills: {} });
+      rowMap.set(key, { property: bill.property, unit: normalizeUnit(bill.unit), bills: {}, allBills: [] });
     }
+    const row = rowMap.get(key);
+    row.allBills.push(bill);
     const type = bill.type;
     if (SERVICES.includes(type)) {
       // Keep first bill found for each service (duplicates in same month are rare)
-      if (!rowMap.get(key).bills[type]) {
-        rowMap.get(key).bills[type] = bill;
+      if (!row.bills[type]) {
+        row.bills[type] = bill;
       }
     }
+  }
+
+  // For each row, find the earliest bill date (first bill of the month for this property)
+  for (const row of rowMap.values()) {
+    const dated = row.allBills.filter(b => b.dueRaw);
+    if (dated.length === 0) {
+      row.firstDate = null;
+      continue;
+    }
+    dated.sort((a, b) => a.dueRaw.localeCompare(b.dueRaw));
+    row.firstDate = dated[0].due; // formatted "Apr 11"
   }
 
   // Sort rows: alphabetically by property, then by unit
@@ -68,6 +88,7 @@ export default function BillsTable({ filtered, onSelectBill, onAssignBill }) {
           <div className="matrix-header">
             <span className="th">Property</span>
             <span className="th">Unit</span>
+            <span className="th">First bill</span>
             {SERVICES.map(svc => (
               <span key={svc} className="th">{SERVICE_LABELS[svc]}</span>
             ))}
@@ -81,6 +102,7 @@ export default function BillsTable({ filtered, onSelectBill, onAssignBill }) {
               <div key={i} className="matrix-row">
                 <span className="td-property">{row.property}</span>
                 <span className="td mono">{row.unit || '—'}</span>
+                <span className="td mono" style={{ fontSize: 13, color: 'var(--text2)' }}>{row.firstDate || '—'}</span>
                 {SERVICES.map(svc => {
                   const bill = row.bills[svc];
                   if (!bill) return (
@@ -92,7 +114,10 @@ export default function BillsTable({ filtered, onSelectBill, onAssignBill }) {
                       className="matrix-cell"
                       onClick={() => onSelectBill(bill)}
                     >
-                      <span className="matrix-cell-amount">{fmt(bill.amount)}</span>
+                      <span className="matrix-cell-amount">
+                        {fmt(bill.amount)}
+                        <MatchBadge match={matches[bill.id]} />
+                      </span>
                       <span className="matrix-cell-account">·····{bill.account}</span>
                     </span>
                   );
@@ -105,6 +130,7 @@ export default function BillsTable({ filtered, onSelectBill, onAssignBill }) {
           {/* Totals row */}
           <div className="matrix-total-row">
             <span>Total</span>
+            <span></span>
             <span></span>
             {SERVICES.map(svc => (
               <span key={svc} className="mono">{colTotals[svc] > 0 ? fmt(colTotals[svc]) : '—'}</span>
@@ -129,7 +155,7 @@ export default function BillsTable({ filtered, onSelectBill, onAssignBill }) {
             >
               <span className="matrix-unmapped-type">{bill.type}</span>
               <span className="mono">·····{bill.account}</span>
-              <span className="mono">{fmt(bill.amount)}</span>
+              <span className="mono">{fmt(bill.amount)} <MatchBadge match={matches[bill.id]} /></span>
               <span className="matrix-unmapped-due">{bill.due}</span>
               <span style={{ color: 'var(--accent)', fontSize: 11, marginLeft: 'auto' }}>+ Assign →</span>
             </div>

@@ -28,6 +28,9 @@ export default function Dashboard() {
   const [addOpen,         setAddOpen]         = useState(false);
   const [syncing,         setSyncing]         = useState(false);
   const [lastSynced,      setLastSynced]      = useState('');
+  const [matchingQB,      setMatchingQB]      = useState(false);
+  const [qbConnected,     setQbConnected]     = useState(false);
+  const [matches,         setMatches]         = useState({}); // { billId: { count, matches[] } }
 
   const fetchBills = async () => {
     const res  = await fetch('/api/bills');
@@ -41,8 +44,16 @@ export default function Dashboard() {
     if (data.ok) setProperties(data.properties);
   };
 
+  const fetchQBStatus = async () => {
+    try {
+      const res  = await fetch('/api/quickbooks/status');
+      const data = await res.json();
+      if (data.ok && data.connected) setQbConnected(true);
+    } catch {}
+  };
+
   useEffect(() => {
-    Promise.all([fetchBills(), fetchProperties()])
+    Promise.all([fetchBills(), fetchProperties(), fetchQBStatus()])
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -98,6 +109,39 @@ export default function Dashboard() {
     showToast('Bill assigned to property');
   };
 
+  const handleMatchQB = async () => {
+    if (!qbConnected) {
+      showToast('QuickBooks not connected yet');
+      return;
+    }
+    setMatchingQB(true);
+    try {
+      const billIds = filtered.map(b => b.id);
+      if (billIds.length === 0) {
+        showToast('No bills in this view to match');
+        return;
+      }
+      const res  = await fetch('/api/quickbooks/match', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ billIds }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setMatches(prev => ({ ...prev, ...data.results }));
+        const matched = Object.values(data.results).filter(r => r.count >= 1).length;
+        const ambig   = Object.values(data.results).filter(r => r.count >  1).length;
+        showToast(`Matched ${matched}/${billIds.length}${ambig ? ` — ${ambig} need review` : ''}`);
+      } else {
+        showToast(`Match failed — ${data.error || 'unknown error'}`);
+      }
+    } catch (e) {
+      showToast(`Match failed — ${e.message}`);
+    } finally {
+      setMatchingQB(false);
+    }
+  };
+
   const handleSync = async () => {
     setSyncing(true);
     try {
@@ -128,10 +172,24 @@ export default function Dashboard() {
   const monthBills    = bills.filter(b => b.dueMonth === monthIndex && b.dueYear === year);
   const prevMonthBills = bills.filter(b => b.dueMonth === prevMonthIndex && b.dueYear === prevYear);
   const filtered      = monthBills.filter(b => {
-    const matchSearch = search === '' ||
-      (b.property || '').toLowerCase().includes(search.toLowerCase()) ||
-      (b.unit || '').toLowerCase().includes(search.toLowerCase());
-    return matchSearch;
+    if (search === '') return true;
+    const term = search.trim().toLowerCase();
+
+    // Text match — property and unit
+    if ((b.property || '').toLowerCase().includes(term)) return true;
+    if ((b.unit || '').toLowerCase().includes(term)) return true;
+
+    // Amount match — accept "61.25", "$61.25", "61", etc.
+    const numeric = parseFloat(term.replace(/[^0-9.]/g, ''));
+    if (!isNaN(numeric) && numeric > 0) {
+      const amt = b.amount;
+      // Exact match (after rounding to 2 decimals)
+      if (Math.abs(amt - numeric) < 0.005) return true;
+      // Substring match on the number itself (e.g. "61" finds 61.25, 161.40)
+      if (amt.toFixed(2).includes(term)) return true;
+    }
+
+    return false;
   });
   if (loading) return (
     <div className="page-wrap" style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh' }}>
@@ -149,6 +207,9 @@ export default function Dashboard() {
         onSync={handleSync}
         syncing={syncing}
         lastSynced={lastSynced}
+        onMatchQB={handleMatchQB}
+        matchingQB={matchingQB}
+        qbConnected={qbConnected}
       />
       <StatsRow monthBills={monthBills} prevMonthBills={prevMonthBills} />
       <FiltersBar
@@ -163,6 +224,7 @@ export default function Dashboard() {
         filtered={filtered}
         onSelectBill={setSelectedBill}
         onAssignBill={setAssignBill}
+        matches={matches}
       />
 
       <div className={`toast ${toast ? 'show' : ''}`}>{toastMsg}</div>
@@ -171,6 +233,7 @@ export default function Dashboard() {
         bill={selectedBill}
         onClose={() => setSelectedBill(null)}
         year={year}
+        match={selectedBill ? matches[selectedBill.id] : null}
       />
       <AddBillModal
         open={addOpen}

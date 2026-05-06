@@ -1,6 +1,6 @@
 import { fmt } from '@/lib/utils';
 
-export default function BillDetailModal({ bill, onClose, year }) {
+export default function BillDetailModal({ bill, onClose, year, match }) {
   return (
     <div
       className={`overlay ${bill ? 'show' : ''}`}
@@ -34,6 +34,33 @@ export default function BillDetailModal({ bill, onClose, year }) {
               </span>
             </div>
           </div>
+
+          {match && (
+            <div className="qb-match-block">
+              <label>QuickBooks match</label>
+              {match.count === 0 && (
+                <p className="qb-match-empty">No matching transaction found in QuickBooks (±15 days).</p>
+              )}
+              {match.count >= 1 && (
+                <>
+                  {match.count > 1 && (
+                    <p className="qb-match-warn">⚠ {match.count} possible matches — review manually.</p>
+                  )}
+                  <ul className="qb-match-list">
+                    {match.matches.map(m => (
+                      <li key={`${m.type}-${m.id}`}>
+                        <span className="qb-match-date">{m.date}</span>
+                        <span className="qb-match-amount">{fmt(m.amount)}</span>
+                        <span className="qb-match-payee">{m.payee || m.account || '—'}</span>
+                        <span className="qb-match-type">{m.type}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+          )}
+
           <div className="modal-footer">
             <button className="btn" onClick={onClose}>Close</button>
             {bill.gmailLink && (

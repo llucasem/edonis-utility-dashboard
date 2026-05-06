@@ -1,6 +1,10 @@
 import { IconChart } from './Icons';
 
-export default function TopBar({ exportCSV, onAnalytics, onAddData, toggleDark, onSync, syncing, lastSynced }) {
+export default function TopBar({
+  exportCSV, onAnalytics, onAddData, toggleDark,
+  onSync, syncing, lastSynced,
+  onMatchQB, matchingQB, qbConnected,
+}) {
   return (
     <div className="topbar">
       <div className="brand">
@@ -17,6 +21,14 @@ export default function TopBar({ exportCSV, onAnalytics, onAddData, toggleDark, 
           <IconChart /> Analytics
         </button>
         <button className="btn" onClick={onAddData}>+ Add data</button>
+        <button
+          className="btn"
+          onClick={onMatchQB}
+          disabled={matchingQB || !qbConnected}
+          title={qbConnected ? 'Match payments with QuickBooks' : 'QuickBooks not connected yet'}
+        >
+          {matchingQB ? '⏳ Matching…' : '⇆ Match QB'}
+        </button>
         <button className="btn primary" onClick={onSync} disabled={syncing}>
           {syncing ? '⏳ Syncing…' : '↻ Sync now'}
         </button>

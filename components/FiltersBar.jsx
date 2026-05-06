@@ -11,7 +11,7 @@ export default function FiltersBar({ monthIndex, year, onPrev, onNext, search, o
       <input
         className="search-input"
         type="text"
-        placeholder="Search by property or address…"
+        placeholder="Search by property, address or amount (e.g. 61.25)…"
         value={search}
         onChange={e => onSearch(e.target.value)}
       />
